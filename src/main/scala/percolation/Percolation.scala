@@ -13,9 +13,18 @@ trait Percolation {
 
 	val columns: Int
 
-	private lazy val sites: Array[Boolean] = new Array(rows*columns)
+	private lazy val topIndex: Int = rows*columns
 
-	private lazy val unionUF: WeightedQuickUnionUF = new WeightedQuickUnionUF(rows*columns)
+	private lazy val bottomIndex: Int = rows*columns+1
+
+	private lazy val sites: Array[Boolean] = {
+		val grid = new Array[Boolean](rows*columns+2)
+		grid(topIndex) = true
+		grid(bottomIndex) = true
+		grid
+	}
+
+	private lazy val unionUF: WeightedQuickUnionUF = new WeightedQuickUnionUF(rows*columns+2)
 
 	def open(i: Int, j: Int) = {
 		val index = toIndex(i, j)
@@ -34,21 +43,25 @@ trait Percolation {
 		)
 	}
 
-	def percolates(): Boolean = {
-		getTopSites exists (topIndex =>
-			getButtomSites exists (buttomIndex => 
-				unionUF connected (topIndex, buttomIndex)
-			)
-		)
-	}
+	def percolates(): Boolean = unionUF connected (topIndex, bottomIndex)
 
 	private def findOpened(i: Int, j: Int): List[Int] = {
-		val positions = List((i-1, j), (i+1, j), (i, j-1), (i, j+1))
-		positions filter { case (i, j) =>
-			isInBounds(i, j) && isOpen(i, j)
-		} map { case (i, j) =>
-			toIndex(i, j)
+		def extremeIndex: List[Int] = {
+			if (i == 0)
+				List(topIndex)
+			else if (i == rows-1)
+				List(bottomIndex)
+			else
+				Nil
 		}
+
+		List((i-1, j), (i+1, j), (i, j-1), (i, j+1))
+			.filter { case (i, j) =>
+				isInBounds(i, j) && isOpen(i, j)
+			}
+			.foldLeft(extremeIndex) { (acc, point) =>
+				toIndex(point._1, point._2) :: acc
+			}
 	}
 
 	private def isInBounds(i: Int, j: Int) = {
@@ -57,15 +70,6 @@ trait Percolation {
 
 	private def toIndex(i: Int, j: Int): Int = {
 		columns * i + j
-	}
-
-	private def getTopSites(): List[Int] = {
-		(0 until columns).toList filter (index => sites(index))
-	}
-
-	private def getButtomSites(): List[Int] = {
-		val start = columns * (rows - 1)
-		(start until start + columns).toList filter (index => sites(index))
 	}
 
 }
