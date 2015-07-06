@@ -33,7 +33,7 @@
 
 ###### Implementation
 
-[`...`]
+[`patternRecognition`](https://github.com/AntDek/algorithms-in-scala/tree/master/src/main/scala/patternRecognition)
 
 
 ### Programming Assignment 4: 8 Puzzle ###
